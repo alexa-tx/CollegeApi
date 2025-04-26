@@ -12,4 +12,10 @@ public class StudentProfile
     public Group? Group { get; set; }
 
     public List<Enrollment> Enrollments { get; set; } = new();
+    public string? Bio { get; set; }
+    public DateTime? DateOfBirth { get; set; }
+    public string? AvatarUrl { get; set; }
+    public string? PhoneNumber { get; set; }
+    public string? TelegramUsername { get; set; }
+    public string? Status { get; set; }
 }

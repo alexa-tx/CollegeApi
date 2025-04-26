@@ -14,5 +14,9 @@ namespace CollegeApi.Data
         public DbSet<Enrollment> Enrollments { get; set; }
         public DbSet<NewsPost> NewsPosts { get; set; }
         public DbSet<ScheduleItem> ScheduleItems { get; set; }
+        public DbSet<Grade> Grades { get; set; }
+        public DbSet<Homework> Homeworks { get; set; }
+        public DbSet<HomeworkSubmission> HomeworkSubmissions { get; set; }
+
     }
 }

@@ -49,21 +49,40 @@ namespace CollegeApi.Controllers
 
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
+
             if (user.Role == "Teacher")
             {
                 var teacherProfile = new TeacherProfile
                 {
-                    FullName = request.Username,
+                    FullName = request.FullName,
                     UserId = user.Id
                 };
 
                 _context.TeacherProfiles.Add(teacherProfile);
-                await _context.SaveChangesAsync();
+            }
+            else if (user.Role == "Student")
+            {
+                var defaultGroup = await _context.Groups.FirstOrDefaultAsync(g => g.Name == "Default Group");
+                if (defaultGroup == null)
+                {
+                    defaultGroup = new Group { Name = "Default Group" };
+                    _context.Groups.Add(defaultGroup);
+                    await _context.SaveChangesAsync();
+                }
+
+                var studentProfile = new StudentProfile
+                {
+                    FullName = request.FullName,
+                    UserId = user.Id,
+                    GroupId = defaultGroup.Id
+                };
+
+                _context.StudentProfiles.Add(studentProfile);
             }
 
+            await _context.SaveChangesAsync(); // Теперь сохраняем профиль
             return Ok("Регистрация прошла успешно");
         }
-
 
         [HttpPost("adminOnly")]
         [Authorize(Roles = "Admin")]
@@ -99,7 +118,6 @@ namespace CollegeApi.Controllers
                 Role = role
             });
         }
-
     }
 
     public class LoginRequest
@@ -112,6 +130,7 @@ namespace CollegeApi.Controllers
     {
         public string Username { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
-        public string? Role { get; set; } = "Student";
+        public string? Role { get; set; }
+        public string FullName { get; set; } = string.Empty;
     }
 }
