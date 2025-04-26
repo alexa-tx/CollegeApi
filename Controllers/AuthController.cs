@@ -49,9 +49,21 @@ namespace CollegeApi.Controllers
 
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
+            if (user.Role == "Teacher")
+            {
+                var teacherProfile = new TeacherProfile
+                {
+                    FullName = request.Username,
+                    UserId = user.Id
+                };
+
+                _context.TeacherProfiles.Add(teacherProfile);
+                await _context.SaveChangesAsync();
+            }
 
             return Ok("Регистрация прошла успешно");
         }
+
 
         [HttpPost("adminOnly")]
         [Authorize(Roles = "Admin")]

@@ -1,4 +1,6 @@
 ﻿using CollegeApi.Data;
+using CollegeApi.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,17 +17,25 @@ namespace CollegeApi.Controllers
             _context = context;
         }
 
-        [HttpGet("group/{groupId}")]
-        public async Task<IActionResult> GetGroupSchedule(int groupId)
+        [HttpGet]
+        public async Task<IActionResult> GetAll()
         {
-            var schedule = await _context.Schedules
-                .Where(s => s.GroupId == groupId)
+            var schedule = await _context.ScheduleItems
+                .Include(s => s.Group) 
+                .Include(s => s.Teacher) 
                 .Include(s => s.Course)
-                .OrderBy(s => s.DayOfWeek)
-                .ThenBy(s => s.Time)
                 .ToListAsync();
 
             return Ok(schedule);
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Create([FromBody] ScheduleItem item)
+        {
+            _context.ScheduleItems.Add(item);
+            await _context.SaveChangesAsync();
+            return Ok(item);
         }
     }
 }

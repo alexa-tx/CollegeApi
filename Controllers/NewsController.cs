@@ -18,20 +18,20 @@ namespace CollegeApi.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllNews()
+        public async Task<IActionResult> GetNews()
         {
-            var news = await _context.News.OrderByDescending(n => n.Date).ToListAsync();
+            var news = await _context.NewsPosts.OrderByDescending(n => n.DatePosted).ToListAsync();
             return Ok(news);
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin,Teacher")]
-        public async Task<IActionResult> PostNews([FromBody] NewsItem item)
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> PostNews([FromBody] NewsPost news)
         {
-            item.Date = DateTime.UtcNow;
-            _context.News.Add(item);
+            news.DatePosted = DateTime.UtcNow;
+            _context.NewsPosts.Add(news);
             await _context.SaveChangesAsync();
-            return Ok("Новость опубликована");
+            return Ok(news);
         }
     }
 }

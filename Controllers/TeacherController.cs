@@ -21,7 +21,12 @@ namespace CollegeApi.Controllers
         public async Task<IActionResult> GetProfile()
         {
             var username = User.Identity?.Name;
-            var teacher = await _context.Teachers
+            if (string.IsNullOrEmpty(username))
+            {
+                return Unauthorized("Не удалось найти пользователя.");
+            }
+
+            var teacher = await _context.TeacherProfiles
                 .Include(t => t.Courses)
                 .FirstOrDefaultAsync(t => t.User.Username == username);
 
@@ -29,6 +34,23 @@ namespace CollegeApi.Controllers
                 return NotFound("Профиль преподавателя не найден");
 
             return Ok(teacher);
+        }
+
+
+        [HttpPost("assign-course")]
+        public async Task<IActionResult> AssignCourse([FromBody] int courseId)
+        {
+            var username = User.Identity?.Name;
+            var teacher = await _context.TeacherProfiles.Include(t => t.Courses).FirstOrDefaultAsync(t => t.User.Username == username);
+            var course = await _context.Courses.FindAsync(courseId);
+
+            if (teacher == null || course == null)
+                return NotFound("Преподаватель или курс не найден");
+
+            teacher.Courses.Add(course);
+            await _context.SaveChangesAsync();
+
+            return Ok("Курс успешно добавлен преподавателю");
         }
     }
 }

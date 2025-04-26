@@ -1,11 +1,9 @@
-﻿namespace CollegeApi.Models
+﻿using CollegeApi.Models;
+
+public class Group
 {
-    public class Group
-    {
-        public int Id { get; set; }
-        public string Name { get; set; } = string.Empty;
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
 
-        public List<StudentProfile> Students { get; set; } = new();
-    }
-
+    public List<StudentProfile> Students { get; set; } = new();
 }

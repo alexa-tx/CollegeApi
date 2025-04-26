@@ -3,6 +3,7 @@ using System;
 using CollegeApi.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CollegeApi.Migrations
 {
     [DbContext(typeof(CollegeDbContext))]
-    partial class CollegeDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250419173506_UpdateModels")]
+    partial class UpdateModels
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.4");
@@ -39,6 +42,45 @@ namespace CollegeApi.Migrations
                     b.HasIndex("TeacherProfileId");
 
                     b.ToTable("Courses");
+                });
+
+            modelBuilder.Entity("CollegeApi.Models.Enrollment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("CourseId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("EnrolledAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("StudentProfileId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CourseId");
+
+                    b.HasIndex("StudentProfileId");
+
+                    b.ToTable("Enrollments");
+                });
+
+            modelBuilder.Entity("CollegeApi.Models.Group", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Groups");
                 });
 
             modelBuilder.Entity("CollegeApi.Models.NewsPost", b =>
@@ -99,6 +141,31 @@ namespace CollegeApi.Migrations
                     b.ToTable("ScheduleItems");
                 });
 
+            modelBuilder.Entity("CollegeApi.Models.StudentProfile", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("GroupId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GroupId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("StudentProfiles");
+                });
+
             modelBuilder.Entity("CollegeApi.Models.TeacherProfile", b =>
                 {
                     b.Property<int>("Id")
@@ -142,70 +209,6 @@ namespace CollegeApi.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("Enrollment", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("CourseId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("EnrolledAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("StudentProfileId")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CourseId");
-
-                    b.HasIndex("StudentProfileId");
-
-                    b.ToTable("Enrollments");
-                });
-
-            modelBuilder.Entity("Group", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Groups");
-                });
-
-            modelBuilder.Entity("StudentProfile", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("FullName")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("GroupId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("GroupId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("StudentProfiles");
-                });
-
             modelBuilder.Entity("CollegeApi.Models.Course", b =>
                 {
                     b.HasOne("CollegeApi.Models.TeacherProfile", "Teacher")
@@ -217,6 +220,25 @@ namespace CollegeApi.Migrations
                     b.Navigation("Teacher");
                 });
 
+            modelBuilder.Entity("CollegeApi.Models.Enrollment", b =>
+                {
+                    b.HasOne("CollegeApi.Models.Course", "Course")
+                        .WithMany("Enrollments")
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("CollegeApi.Models.StudentProfile", "StudentProfile")
+                        .WithMany("Enrollments")
+                        .HasForeignKey("StudentProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Course");
+
+                    b.Navigation("StudentProfile");
+                });
+
             modelBuilder.Entity("CollegeApi.Models.ScheduleItem", b =>
                 {
                     b.HasOne("CollegeApi.Models.Course", "Course")
@@ -225,7 +247,7 @@ namespace CollegeApi.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Group", "Group")
+                    b.HasOne("CollegeApi.Models.Group", "Group")
                         .WithMany()
                         .HasForeignKey("GroupId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -244,39 +266,9 @@ namespace CollegeApi.Migrations
                     b.Navigation("Teacher");
                 });
 
-            modelBuilder.Entity("CollegeApi.Models.TeacherProfile", b =>
+            modelBuilder.Entity("CollegeApi.Models.StudentProfile", b =>
                 {
-                    b.HasOne("CollegeApi.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Enrollment", b =>
-                {
-                    b.HasOne("CollegeApi.Models.Course", "Course")
-                        .WithMany("Enrollments")
-                        .HasForeignKey("CourseId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("StudentProfile", "StudentProfile")
-                        .WithMany("Enrollments")
-                        .HasForeignKey("StudentProfileId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Course");
-
-                    b.Navigation("StudentProfile");
-                });
-
-            modelBuilder.Entity("StudentProfile", b =>
-                {
-                    b.HasOne("Group", "Group")
+                    b.HasOne("CollegeApi.Models.Group", "Group")
                         .WithMany("Students")
                         .HasForeignKey("GroupId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -293,7 +285,28 @@ namespace CollegeApi.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("CollegeApi.Models.TeacherProfile", b =>
+                {
+                    b.HasOne("CollegeApi.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("CollegeApi.Models.Course", b =>
+                {
+                    b.Navigation("Enrollments");
+                });
+
+            modelBuilder.Entity("CollegeApi.Models.Group", b =>
+                {
+                    b.Navigation("Students");
+                });
+
+            modelBuilder.Entity("CollegeApi.Models.StudentProfile", b =>
                 {
                     b.Navigation("Enrollments");
                 });
@@ -301,16 +314,6 @@ namespace CollegeApi.Migrations
             modelBuilder.Entity("CollegeApi.Models.TeacherProfile", b =>
                 {
                     b.Navigation("Courses");
-                });
-
-            modelBuilder.Entity("Group", b =>
-                {
-                    b.Navigation("Students");
-                });
-
-            modelBuilder.Entity("StudentProfile", b =>
-                {
-                    b.Navigation("Enrollments");
                 });
 #pragma warning restore 612, 618
         }

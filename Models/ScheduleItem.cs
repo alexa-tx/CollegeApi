@@ -13,6 +13,7 @@
 
         public int TeacherProfileId { get; set; }
         public TeacherProfile Teacher { get; set; }
+        public Course Course { get; set; }
     }
 
 }
