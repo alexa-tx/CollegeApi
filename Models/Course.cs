@@ -12,6 +12,7 @@ namespace CollegeApi.Models
         [ForeignKey("TeacherProfileId")]
         public TeacherProfile? Teacher { get; set; }
         public List<Enrollment> Enrollments { get; set; } = new();
+
     }
 
 }

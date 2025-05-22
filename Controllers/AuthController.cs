@@ -1,9 +1,10 @@
-﻿using CollegeApi.Models;
-using CollegeApi.Data;
+﻿using CollegeApi.Data;
+using CollegeApi.DTOs;
 using CollegeApi.Interfaces;
+using CollegeApi.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 
 namespace CollegeApi.Controllers
@@ -22,11 +23,12 @@ namespace CollegeApi.Controllers
         }
 
         [HttpPost("login")]
-        public IActionResult Login([FromBody] LoginRequest request)
+        [Consumes("application/x-www-form-urlencoded")]
+        public IActionResult Login([FromForm] LoginForm form)
         {
-            if (_authService.ValidateUser(request.Username, request.Password))
+            if (_authService.ValidateUser(form.Username, form.Password))
             {
-                var token = _authService.GenerateJwtToken(request.Username);
+                var token = _authService.GenerateJwtToken(form.Username);
                 return Ok(new { Token = token });
             }
 
@@ -34,76 +36,70 @@ namespace CollegeApi.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterRequest request)
+        [Consumes("application/x-www-form-urlencoded")]
+        public async Task<IActionResult> Register([FromForm] RegisterForm form)
         {
-            var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Username == request.Username);
-            if (existingUser != null)
+            if (await _context.Users.AnyAsync(u => u.Username == form.Username))
                 return BadRequest("Пользователь с таким логином уже существует");
 
             var user = new User
             {
-                Username = request.Username,
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
-                Role = request.Role ?? "Student"
+                Username = form.Username,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(form.Password),
+                Role = form.Role ?? "Student"
             };
 
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
+            // Соберём ФИО
+            var fullName = $"{form.LastName} {form.FirstName} {form.MiddleName}".Trim();
+
             if (user.Role == "Teacher")
             {
                 var teacherProfile = new TeacherProfile
                 {
-                    FullName = request.FullName,
+                    FullName = fullName,
                     UserId = user.Id
                 };
-
                 _context.TeacherProfiles.Add(teacherProfile);
             }
-            else if (user.Role == "Student")
+            else // Student
             {
-                var defaultGroup = await _context.Groups.FirstOrDefaultAsync(g => g.Name == "Default Group");
-                if (defaultGroup == null)
+                // Найдём или создадим Default Group
+                var defaultGroup = await _context.Groups.FirstOrDefaultAsync(g => g.Name == "Default Group")
+                                   ?? new Group { Name = "Default Group" };
+
+                if (defaultGroup.Id == 0)
                 {
-                    defaultGroup = new Group { Name = "Default Group" };
                     _context.Groups.Add(defaultGroup);
                     await _context.SaveChangesAsync();
                 }
 
                 var studentProfile = new StudentProfile
                 {
-                    FullName = request.FullName,
+                    FullName = fullName,
                     UserId = user.Id,
                     GroupId = defaultGroup.Id
                 };
-
                 _context.StudentProfiles.Add(studentProfile);
             }
 
-            await _context.SaveChangesAsync(); // Теперь сохраняем профиль
-            return Ok("Регистрация прошла успешно");
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Регистрация прошла успешно" });
         }
 
         [HttpPost("adminOnly")]
         [Authorize(Roles = "Admin")]
-        public IActionResult AdminOnlyAction()
-        {
-            return Ok("Only accessible by Admins!");
-        }
+        public IActionResult AdminOnlyAction() => Ok("Только для администратора");
 
         [HttpPost("teacherOnly")]
         [Authorize(Roles = "Teacher")]
-        public IActionResult TeacherOnlyAction()
-        {
-            return Ok("Only accessible by Teachers!");
-        }
+        public IActionResult TeacherOnlyAction() => Ok("Только для преподавателя");
 
         [HttpPost("studentOnly")]
         [Authorize(Roles = "Student")]
-        public IActionResult StudentOnlyAction()
-        {
-            return Ok("Only accessible by Students!");
-        }
+        public IActionResult StudentOnlyAction() => Ok("Только для студента");
 
         [HttpGet("me")]
         [Authorize]
@@ -111,26 +107,14 @@ namespace CollegeApi.Controllers
         {
             var username = User.Identity?.Name;
             var role = User.FindFirst(ClaimTypes.Role)?.Value;
-
-            return Ok(new
-            {
-                Username = username,
-                Role = role
-            });
+            return Ok(new { Username = username, Role = role });
         }
     }
 
+    // Старая модель логина остаётся без изменений
     public class LoginRequest
     {
         public string Username { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
-    }
-
-    public class RegisterRequest
-    {
-        public string Username { get; set; } = string.Empty;
-        public string Password { get; set; } = string.Empty;
-        public string? Role { get; set; }
-        public string FullName { get; set; } = string.Empty;
     }
 }

@@ -1,4 +1,5 @@
 ﻿using CollegeApi.Data;
+using CollegeApi.DTOs;
 using CollegeApi.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -21,27 +22,42 @@ namespace CollegeApi.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var groups = await _context.Groups.Include(g => g.Students).ToListAsync();
+            var groups = await _context.Groups
+                .Include(g => g.Students)
+                .ToListAsync();
             return Ok(groups);
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] Group group)
+        [Consumes("application/x-www-form-urlencoded")]
+        public async Task<IActionResult> Create([FromForm] GroupForm form)
         {
+            var group = new Group
+            {
+                Name = form.Name
+            };
+
             _context.Groups.Add(group);
             await _context.SaveChangesAsync();
 
-            foreach (var student in group.Students)
+            // Привязываем студентов
+            foreach (var studentId in form.StudentProfileIds)
             {
-                var studentProfile = await _context.StudentProfiles.FindAsync(student.Id);
-                if (studentProfile != null)
+                var student = await _context.StudentProfiles.FindAsync(studentId);
+                if (student != null)
                 {
-                    studentProfile.GroupId = group.Id;
-                    _context.StudentProfiles.Update(studentProfile);
+                    student.GroupId = group.Id;
+                    _context.StudentProfiles.Update(student);
                 }
             }
 
             await _context.SaveChangesAsync();
+
+            // Подтянем студентов для возврата
+            await _context.Entry(group)
+                .Collection(g => g.Students)
+                .Query()
+                .LoadAsync();
 
             return Ok(group);
         }
@@ -50,7 +66,8 @@ namespace CollegeApi.Controllers
         public async Task<IActionResult> Delete(int id)
         {
             var group = await _context.Groups.FindAsync(id);
-            if (group == null) return NotFound();
+            if (group == null)
+                return NotFound();
 
             _context.Groups.Remove(group);
             await _context.SaveChangesAsync();
@@ -58,3 +75,4 @@ namespace CollegeApi.Controllers
         }
     }
 }
+    

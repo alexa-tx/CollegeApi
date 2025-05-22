@@ -1,5 +1,6 @@
-﻿using CollegeApi.Models;
-using CollegeApi.Data;
+﻿using CollegeApi.Data;
+using CollegeApi.DTOs;
+using CollegeApi.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,29 +17,34 @@ namespace CollegeApi.Controllers
             _context = context;
         }
 
-        // POST /api/Homework - создание домашнего задания
         [HttpPost]
-        public async Task<IActionResult> CreateHomework([FromBody] Homework homework)
+        [Consumes("application/x-www-form-urlencoded")]  // для Swagger UI формы
+        public async Task<IActionResult> CreateHomework([FromForm] HomeworkForm form)
         {
-            if (homework == null)
-            {
-                return BadRequest("Домашнее задание не может быть пустым.");
-            }
+            // Проверяем предмет
+            var subject = await _context.Subjects.FindAsync(form.SubjectId);
+            if (subject == null)
+                return NotFound("Предмет не найден.");
 
-            // Проверка наличия курса в базе
-            var course = await _context.Courses.FindAsync(homework.CourseId);
-            if (course == null)
+            // Собираем модель
+            var homework = new Homework
             {
-                return NotFound("Курс не найден.");
-            }
-
-            // Присваиваем найденный курс объекту Homework
-            homework.Course = course;
+                Title = form.Title,
+                Description = form.Description,
+                DueDate = form.DueDate,
+                SubjectId = form.SubjectId,
+                Subject = subject,
+                CreatedAt = DateTime.UtcNow
+            };
 
             _context.Homeworks.Add(homework);
             await _context.SaveChangesAsync();
 
-            return Ok(new { message = "Домашнее задание успешно создано", homework });
+            return Ok(new
+            {
+                message = "Домашнее задание успешно создано",
+                homework = homework
+            });
         }
     }
 }

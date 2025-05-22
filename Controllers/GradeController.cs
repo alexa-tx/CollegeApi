@@ -1,4 +1,5 @@
 ﻿using CollegeApi.Data;
+using CollegeApi.DTOs;
 using CollegeApi.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -17,15 +18,25 @@ namespace CollegeApi.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateGrade([FromBody] Grade grade)
+        [Consumes("application/x-www-form-urlencoded")] // Swagger отрисует поля
+        public async Task<IActionResult> CreateGrade([FromForm] GradeForm form)
         {
-            if (!await _context.StudentProfiles.AnyAsync(s => s.Id == grade.StudentProfileId))
+            if (!await _context.StudentProfiles.AnyAsync(s => s.Id == form.StudentProfileId))
                 return NotFound("Студент не найден.");
 
-            if (!await _context.Courses.AnyAsync(c => c.Id == grade.CourseId))
-                return NotFound("Курс не найден.");
+            if (!await _context.Subjects.AnyAsync(s => s.Id == form.SubjectId))
+                return NotFound("Предмет не найден.");
 
-            grade.CreatedAt = DateTime.UtcNow; // Защита от "кривых" дат из клиента
+            var grade = new Grade
+            {
+                StudentProfileId = form.StudentProfileId,
+                SubjectId = form.SubjectId,
+                Value = form.Value,
+                Comment = form.Comment,
+                GradeType = form.GradeType,
+                CreatedAt = DateTime.UtcNow
+            };
+
             _context.Grades.Add(grade);
             await _context.SaveChangesAsync();
 
@@ -37,7 +48,7 @@ namespace CollegeApi.Controllers
         {
             var grades = await _context.Grades
                 .Where(g => g.StudentProfileId == studentId)
-                .Include(g => g.Course)
+                .Include(g => g.Subject)
                 .ToListAsync();
 
             if (!grades.Any())
@@ -52,16 +63,16 @@ namespace CollegeApi.Controllers
             });
         }
 
-        [HttpGet("course/{courseId}")]
-        public async Task<IActionResult> GetGradesByCourse(int courseId)
+        [HttpGet("subject/{subjectId}")]
+        public async Task<IActionResult> GetGradesBySubject(int subjectId)
         {
             var grades = await _context.Grades
-                .Where(g => g.CourseId == courseId)
+                .Where(g => g.SubjectId == subjectId)
                 .Include(g => g.StudentProfile)
                 .ToListAsync();
 
             if (!grades.Any())
-                return NotFound("Оценки для этого курса не найдены.");
+                return NotFound("Оценки для этого предмета не найдены.");
 
             var average = grades.Average(g => g.Value);
 

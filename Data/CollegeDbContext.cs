@@ -18,5 +18,27 @@ namespace CollegeApi.Data
         public DbSet<Homework> Homeworks { get; set; }
         public DbSet<HomeworkSubmission> HomeworkSubmissions { get; set; }
 
+        public DbSet<Subject> Subjects { get; set; }
+
+        public DbSet<TeacherSubject> TeacherSubjects { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            // Конфигурация связи многие-ко-многим между TeacherProfile и Subject
+            modelBuilder.Entity<TeacherSubject>()
+                .HasKey(ts => new { ts.TeacherProfileId, ts.SubjectId });
+
+            modelBuilder.Entity<TeacherSubject>()
+                .HasOne(ts => ts.TeacherProfile)
+                .WithMany(t => t.TeacherSubjects)
+                .HasForeignKey(ts => ts.TeacherProfileId);
+
+            modelBuilder.Entity<TeacherSubject>()
+                .HasOne(ts => ts.Subject)
+                .WithMany(s => s.TeacherSubjects)
+                .HasForeignKey(ts => ts.SubjectId);
+        }
     }
 }

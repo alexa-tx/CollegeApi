@@ -19,10 +19,8 @@ namespace CollegeApi.Models
         [JsonIgnore]
         public StudentProfile? StudentProfile { get; set; }
 
-        public int CourseId { get; set; }
-
-        [JsonIgnore]
-        public Course? Course { get; set; }
+        public int SubjectId { get; set; }
+        public Subject Subject { get; set; } = null!;
 
         public int Value { get; set; }
 
