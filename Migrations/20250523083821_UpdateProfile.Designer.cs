@@ -3,6 +3,7 @@ using System;
 using CollegeApi.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CollegeApi.Migrations
 {
     [DbContext(typeof(CollegeDbContext))]
-    partial class CollegeDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250523083821_UpdateProfile")]
+    partial class UpdateProfile
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -219,20 +222,8 @@ namespace CollegeApi.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    b.Property<string>("AvatarUrl")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("Bio")
-                        .HasColumnType("longtext");
-
-                    b.Property<DateTime?>("BirthDate")
-                        .HasColumnType("datetime(6)");
-
                     b.Property<string>("FullName")
                         .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("TelegramLink")
                         .HasColumnType("longtext");
 
                     b.Property<int>("UserId")
@@ -334,7 +325,7 @@ namespace CollegeApi.Migrations
                     b.Property<string>("Bio")
                         .HasColumnType("longtext");
 
-                    b.Property<DateTime?>("BirthDate")
+                    b.Property<DateTime?>("DateOfBirth")
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("FullName")
@@ -344,7 +335,13 @@ namespace CollegeApi.Migrations
                     b.Property<int>("GroupId")
                         .HasColumnType("int");
 
-                    b.Property<string>("TelegramLink")
+                    b.Property<string>("PhoneNumber")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Status")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("TelegramUsername")
                         .HasColumnType("longtext");
 
                     b.Property<int>("UserId")

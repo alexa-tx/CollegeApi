@@ -109,6 +109,210 @@ namespace CollegeApi.Controllers
             var role = User.FindFirst(ClaimTypes.Role)?.Value;
             return Ok(new { Username = username, Role = role });
         }
+
+        [HttpPut("update/{userId}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> UpdateUser(int userId, [FromForm] UpdateUserForm form)
+        {
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null)
+                return NotFound("Пользователь не найден");
+
+            // Обновление пароля
+            if (!string.IsNullOrEmpty(form.Password))
+            {
+                user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(form.Password);
+            }
+
+            // Обновление роли
+            if (!string.IsNullOrEmpty(form.Role))
+            {
+                user.Role = form.Role;
+            }
+
+            // Обновление ФИО в профиле
+            if (!string.IsNullOrEmpty(form.FullName))
+            {
+                if (user.Role == "Teacher")
+                {
+                    var teacherProfile = await _context.TeacherProfiles.FirstOrDefaultAsync(p => p.UserId == userId);
+                    if (teacherProfile != null) teacherProfile.FullName = form.FullName;
+                }
+                else if (user.Role == "Student")
+                {
+                    var studentProfile = await _context.StudentProfiles.FirstOrDefaultAsync(p => p.UserId == userId);
+                    if (studentProfile != null) studentProfile.FullName = form.FullName;
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok("Пользователь обновлен");
+        }
+
+        [HttpDelete("{userId}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> DeleteUser(int userId)
+        {
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null)
+                return NotFound("Пользователь не найден");
+
+            // Удаление профилей
+            if (user.Role == "Teacher")
+            {
+                var teacherProfile = await _context.TeacherProfiles.FirstOrDefaultAsync(p => p.UserId == userId);
+                if (teacherProfile != null) _context.TeacherProfiles.Remove(teacherProfile);
+            }
+            else if (user.Role == "Student")
+            {
+                var studentProfile = await _context.StudentProfiles.FirstOrDefaultAsync(p => p.UserId == userId);
+                if (studentProfile != null) _context.StudentProfiles.Remove(studentProfile);
+            }
+
+            _context.Users.Remove(user);
+            await _context.SaveChangesAsync();
+
+            return Ok("Пользователь удален");
+        }
+        [HttpGet("users")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetAllUsers()
+        {
+            var users = await _context.Users.ToListAsync();
+
+            var userInfos = new List<UserInfoDto>();
+
+            foreach (var user in users)
+            {
+                string? fullName = null;
+                string? profileType = null;
+
+                if (user.Role == "Teacher")
+                {
+                    var teacher = await _context.TeacherProfiles.FirstOrDefaultAsync(p => p.UserId == user.Id);
+                    if (teacher != null)
+                    {
+                        fullName = teacher.FullName;
+                        profileType = "Teacher";
+                    }
+                }
+                else if (user.Role == "Student")
+                {
+                    var student = await _context.StudentProfiles.FirstOrDefaultAsync(p => p.UserId == user.Id);
+                    if (student != null)
+                    {
+                        fullName = student.FullName;
+                        profileType = "Student";
+                    }
+                }
+
+                userInfos.Add(new UserInfoDto
+                {
+                    Id = user.Id,
+                    Username = user.Username,
+                    Role = user.Role,
+                    FullName = fullName,
+                    ProfileType = profileType
+                });
+            }
+
+            return Ok(userInfos);
+        }
+        [HttpPut("profile")]
+        [Authorize]
+        public async Task<IActionResult> UpdateOwnProfile([FromForm] UpdateProfileDto dto)
+        {
+            var username = User.Identity?.Name;
+            if (username == null) return Unauthorized();
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
+            if (user == null) return NotFound("Пользователь не найден");
+
+            string? filePath = null;
+
+            // Загрузка аватарки
+            if (dto.Avatar != null)
+            {
+                var uploadsDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "avatars");
+                Directory.CreateDirectory(uploadsDir);
+
+                var fileName = $"{Guid.NewGuid()}{Path.GetExtension(dto.Avatar.FileName)}";
+                filePath = Path.Combine(uploadsDir, fileName);
+
+                using var stream = new FileStream(filePath, FileMode.Create);
+                await dto.Avatar.CopyToAsync(stream);
+            }
+
+            if (user.Role == "Teacher")
+            {
+                var profile = await _context.TeacherProfiles.FirstOrDefaultAsync(p => p.UserId == user.Id);
+                if (profile == null) return NotFound("Профиль не найден");
+
+                if (!string.IsNullOrEmpty(dto.FullName)) profile.FullName = dto.FullName;
+                if (!string.IsNullOrEmpty(dto.Bio)) profile.Bio = dto.Bio;
+                if (!string.IsNullOrEmpty(dto.TelegramLink)) profile.TelegramLink = dto.TelegramLink;
+                if (dto.BirthDate != null) profile.BirthDate = dto.BirthDate;
+                if (filePath != null) profile.AvatarUrl = $"/avatars/{Path.GetFileName(filePath)}";
+            }
+            else if (user.Role == "Student")
+            {
+                var profile = await _context.StudentProfiles.FirstOrDefaultAsync(p => p.UserId == user.Id);
+                if (profile == null) return NotFound("Профиль не найден");
+
+                if (!string.IsNullOrEmpty(dto.FullName)) profile.FullName = dto.FullName;
+                if (!string.IsNullOrEmpty(dto.Bio)) profile.Bio = dto.Bio;
+                if (!string.IsNullOrEmpty(dto.TelegramLink)) profile.TelegramLink = dto.TelegramLink;
+                if (dto.BirthDate != null) profile.BirthDate = dto.BirthDate;
+                if (filePath != null) profile.AvatarUrl = $"/avatars/{Path.GetFileName(filePath)}";
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok("Профиль обновлен");
+        }
+        [HttpGet("profile")]
+        [Authorize]
+        public async Task<IActionResult> GetOwnProfile()
+        {
+            var username = User.Identity?.Name;
+            if (username == null) return Unauthorized();
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
+            if (user == null) return NotFound("Пользователь не найден");
+
+            var profileDto = new UserProfileDto
+            {
+                Username = user.Username,
+                Role = user.Role
+            };
+
+            if (user.Role == "Teacher")
+            {
+                var profile = await _context.TeacherProfiles.FirstOrDefaultAsync(p => p.UserId == user.Id);
+                if (profile != null)
+                {
+                    profileDto.FullName = profile.FullName;
+                    profileDto.Bio = profile.Bio;
+                    profileDto.TelegramLink = profile.TelegramLink;
+                    profileDto.BirthDate = profile.BirthDate;
+                    profileDto.AvatarUrl = profile.AvatarUrl;
+                }
+            }
+            else if (user.Role == "Student")
+            {
+                var profile = await _context.StudentProfiles.FirstOrDefaultAsync(p => p.UserId == user.Id);
+                if (profile != null)
+                {
+                    profileDto.FullName = profile.FullName;
+                    profileDto.Bio = profile.Bio;
+                    profileDto.TelegramLink = profile.TelegramLink;
+                    profileDto.BirthDate = profile.BirthDate;
+                    profileDto.AvatarUrl = profile.AvatarUrl;
+                }
+            }
+
+            return Ok(profileDto);
+        }
+
     }
 
     // Старая модель логина остаётся без изменений
