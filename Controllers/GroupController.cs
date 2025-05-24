@@ -40,7 +40,6 @@ namespace CollegeApi.Controllers
             _context.Groups.Add(group);
             await _context.SaveChangesAsync();
 
-            // Привязываем студентов
             foreach (var studentId in form.StudentProfileIds)
             {
                 var student = await _context.StudentProfiles.FindAsync(studentId);
@@ -53,7 +52,6 @@ namespace CollegeApi.Controllers
 
             await _context.SaveChangesAsync();
 
-            // Подтянем студентов для возврата
             await _context.Entry(group)
                 .Collection(g => g.Students)
                 .Query()

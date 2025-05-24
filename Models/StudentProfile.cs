@@ -15,6 +15,6 @@ public class StudentProfile
     public string? Bio { get; set; }
     public string? TelegramLink { get; set; }
     public DateTime? BirthDate { get; set; }
-    public string? AvatarUrl { get; set; } // путь к загруженному изображению
+    public string? AvatarUrl { get; set; }
 
 }

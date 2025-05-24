@@ -30,15 +30,13 @@ namespace CollegeApi.Controllers
 
         [HttpPost]
         [Authorize(Roles = "Admin,Teacher")]
-        [Consumes("application/x-www-form-urlencoded")] // <-- Swagger отрисует форму
+        [Consumes("application/x-www-form-urlencoded")] 
         public async Task<IActionResult> Create([FromForm] CourseForm form)
         {
-            // Проверяем, что преподаватель существует
             var teacher = await _context.TeacherProfiles.FindAsync(form.TeacherProfileId);
             if (teacher == null)
                 return NotFound("Преподаватель с таким ID не найден.");
 
-            // Собираем сущность
             var course = new Course
             {
                 Title = form.Title,

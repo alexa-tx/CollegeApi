@@ -19,8 +19,6 @@ namespace CollegeApi.Controllers
             _context = context;
         }
 
-        // GET: /api/TeacherSubject
-        // Возвращает все связи
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
@@ -31,8 +29,6 @@ namespace CollegeApi.Controllers
             return Ok(list);
         }
 
-        // GET: /api/TeacherSubject/teacher/5
-        // Предметы конкретного преподавателя
         [HttpGet("teacher/{teacherId}")]
         public async Task<IActionResult> GetByTeacher(int teacherId)
         {
@@ -43,8 +39,6 @@ namespace CollegeApi.Controllers
             return Ok(items.Select(ts => ts.Subject));
         }
 
-        // GET: /api/TeacherSubject/subject/3
-        // Преподаватели конкретного предмета
         [HttpGet("subject/{subjectId}")]
         public async Task<IActionResult> GetBySubject(int subjectId)
         {
@@ -55,20 +49,17 @@ namespace CollegeApi.Controllers
             return Ok(items.Select(ts => ts.TeacherProfile));
         }
 
-        // POST: /api/TeacherSubject
-        // Назначить предмет преподавателю
+        
         [HttpPost]
         [Consumes("application/x-www-form-urlencoded")]
         public async Task<IActionResult> Assign([FromForm] TeacherSubjectForm form)
         {
-            // Проверки
             if (!await _context.TeacherProfiles.AnyAsync(t => t.Id == form.TeacherProfileId))
                 return NotFound("Преподаватель не найден.");
 
             if (!await _context.Subjects.AnyAsync(s => s.Id == form.SubjectId))
                 return NotFound("Предмет не найден.");
 
-            // Проверяем дубли
             bool exists = await _context.TeacherSubjects
                 .AnyAsync(ts => ts.TeacherProfileId == form.TeacherProfileId
                              && ts.SubjectId == form.SubjectId);
@@ -87,8 +78,6 @@ namespace CollegeApi.Controllers
             return Ok(tsEntity);
         }
 
-        // DELETE: /api/TeacherSubject
-        // Убрать предмет у преподавателя
         [HttpDelete]
         [Consumes("application/x-www-form-urlencoded")]
         public async Task<IActionResult> Unassign([FromForm] TeacherSubjectForm form)

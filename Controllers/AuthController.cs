@@ -52,7 +52,6 @@ namespace CollegeApi.Controllers
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
-            // Соберём ФИО
             var fullName = $"{form.LastName} {form.FirstName} {form.MiddleName}".Trim();
 
             if (user.Role == "Teacher")
@@ -64,9 +63,8 @@ namespace CollegeApi.Controllers
                 };
                 _context.TeacherProfiles.Add(teacherProfile);
             }
-            else // Student
+            else 
             {
-                // Найдём или создадим Default Group
                 var defaultGroup = await _context.Groups.FirstOrDefaultAsync(g => g.Name == "Default Group")
                                    ?? new Group { Name = "Default Group" };
 
@@ -118,19 +116,16 @@ namespace CollegeApi.Controllers
             if (user == null)
                 return NotFound("Пользователь не найден");
 
-            // Обновление пароля
             if (!string.IsNullOrEmpty(form.Password))
             {
                 user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(form.Password);
             }
 
-            // Обновление роли
             if (!string.IsNullOrEmpty(form.Role))
             {
                 user.Role = form.Role;
             }
 
-            // Обновление ФИО в профиле
             if (!string.IsNullOrEmpty(form.FullName))
             {
                 if (user.Role == "Teacher")
@@ -157,7 +152,6 @@ namespace CollegeApi.Controllers
             if (user == null)
                 return NotFound("Пользователь не найден");
 
-            // Удаление профилей
             if (user.Role == "Teacher")
             {
                 var teacherProfile = await _context.TeacherProfiles.FirstOrDefaultAsync(p => p.UserId == userId);
@@ -230,7 +224,7 @@ namespace CollegeApi.Controllers
 
             string? filePath = null;
 
-            // Загрузка аватарки
+            // аватарка
             if (dto.Avatar != null)
             {
                 var uploadsDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "avatars");
@@ -312,10 +306,60 @@ namespace CollegeApi.Controllers
 
             return Ok(profileDto);
         }
+        [HttpPost("add-user")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> AddUser([FromBody] AdminAddUserDto dto)
+        {
+            if (await _context.Users.AnyAsync(u => u.Username == dto.Username))
+                return BadRequest("Пользователь с таким логином уже существует");
+
+            var user = new User
+            {
+                Username = dto.Username,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
+                Role = dto.Role
+            };
+
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+
+            var fullName = $"{dto.LastName} {dto.FirstName} {dto.MiddleName}".Trim();
+
+            if (dto.Role == "Teacher")
+            {
+                var teacherProfile = new TeacherProfile
+                {
+                    FullName = fullName,
+                    UserId = user.Id
+                };
+                _context.TeacherProfiles.Add(teacherProfile);
+            }
+            else
+            {
+                var defaultGroup = await _context.Groups.FirstOrDefaultAsync(g => g.Name == "Default Group")
+                                   ?? new Group { Name = "Default Group" };
+
+                if (defaultGroup.Id == 0)
+                {
+                    _context.Groups.Add(defaultGroup);
+                    await _context.SaveChangesAsync();
+                }
+
+                var studentProfile = new StudentProfile
+                {
+                    FullName = fullName,
+                    UserId = user.Id,
+                    GroupId = defaultGroup.Id
+                };
+                _context.StudentProfiles.Add(studentProfile);
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok("Пользователь успешно добавлен");
+        }
 
     }
 
-    // Старая модель логина остаётся без изменений
     public class LoginRequest
     {
         public string Username { get; set; } = string.Empty;

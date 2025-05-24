@@ -1,5 +1,4 @@
-﻿// DTOs/RegisterForm.cs
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 
 namespace CollegeApi.DTOs
 {
@@ -12,7 +11,7 @@ namespace CollegeApi.DTOs
         public string Password { get; set; } = string.Empty;
 
         [FromForm]
-        public string? Role { get; set; } // Admin, Teacher, Student
+        public string? Role { get; set; }
 
         [FromForm(Name = "lastName")]
         public string LastName { get; set; } = string.Empty;

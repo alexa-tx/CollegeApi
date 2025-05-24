@@ -1,5 +1,4 @@
-﻿// DTOs/TeacherSubjectForm.cs
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 
 namespace CollegeApi.DTOs
 {

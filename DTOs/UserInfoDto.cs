@@ -6,6 +6,6 @@
         public string Username { get; set; } = string.Empty;
         public string Role { get; set; } = string.Empty;
         public string? FullName { get; set; }
-        public string? ProfileType { get; set; } // "Student" или "Teacher"
+        public string? ProfileType { get; set; }
     }
 }

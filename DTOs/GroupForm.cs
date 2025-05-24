@@ -7,7 +7,6 @@ namespace CollegeApi.DTOs
         [FromForm]
         public string Name { get; set; } = string.Empty;
 
-        // Массив ID студентов, которых нужно добавить в группу
         [FromForm]
         public int[] StudentProfileIds { get; set; } = Array.Empty<int>();
     }

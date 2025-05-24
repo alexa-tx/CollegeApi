@@ -19,7 +19,6 @@ namespace CollegeApi.Controllers
             _context = context;
         }
 
-        // GET: /api/News
         [HttpGet]
         public async Task<IActionResult> GetNews()
         {
@@ -29,7 +28,6 @@ namespace CollegeApi.Controllers
             return Ok(news);
         }
 
-        // POST: /api/News
         [HttpPost]
         [Authorize(Roles = "Admin")]
         [Consumes("multipart/form-data")]
@@ -54,7 +52,6 @@ namespace CollegeApi.Controllers
             return Ok(news);
         }
 
-        // PUT: /api/News/5
         [HttpPut("{id}")]
         [Authorize(Roles = "Admin")]
         [Consumes("multipart/form-data")]
@@ -69,7 +66,6 @@ namespace CollegeApi.Controllers
 
             if (form.Image != null && form.Image.Length > 0)
             {
-                // Удаляем старый файл, если был
                 if (!string.IsNullOrEmpty(news.ImageUrl))
                 {
                     var oldPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", news.ImageUrl.TrimStart('/'));
@@ -85,7 +81,6 @@ namespace CollegeApi.Controllers
             return Ok(news);
         }
 
-        // DELETE: /api/News/5
         [HttpDelete("{id}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteNews(int id)
@@ -94,7 +89,6 @@ namespace CollegeApi.Controllers
             if (news == null)
                 return NotFound("Новость не найдена.");
 
-            // Удаляем файл изображения
             if (!string.IsNullOrEmpty(news.ImageUrl))
             {
                 var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", news.ImageUrl.TrimStart('/'));
@@ -107,7 +101,7 @@ namespace CollegeApi.Controllers
             return Ok("Новость удалена.");
         }
 
-        // Вспомогательный метод для сохранения изображения
+        // сохранение картинки
         private async Task<string> SaveImage(IFormFile image)
         {
             var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "news");

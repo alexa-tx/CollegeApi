@@ -14,7 +14,7 @@
         public TeacherProfile? Teacher { get; set; }
 
         public int SubjectId { get; set; }
-        public Subject? Subject { get; set; } // исправь с Subjects
+        public Subject? Subject { get; set; }
     }
 
 

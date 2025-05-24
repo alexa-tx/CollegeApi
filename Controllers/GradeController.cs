@@ -18,7 +18,7 @@ namespace CollegeApi.Controllers
         }
 
         [HttpPost]
-        [Consumes("application/x-www-form-urlencoded")] // Swagger отрисует поля
+        [Consumes("application/x-www-form-urlencoded")]
         public async Task<IActionResult> CreateGrade([FromForm] GradeForm form)
         {
             if (!await _context.StudentProfiles.AnyAsync(s => s.Id == form.StudentProfileId))
