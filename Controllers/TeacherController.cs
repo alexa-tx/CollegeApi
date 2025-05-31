@@ -2,12 +2,14 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace CollegeApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
     [Authorize(Roles = "Teacher")]
+    [SwaggerTag("Управление профилем преподавателя")]
     public class TeacherController : ControllerBase
     {
         private readonly CollegeDbContext _context;
@@ -18,6 +20,7 @@ namespace CollegeApi.Controllers
         }
 
         [HttpGet("profile")]
+        [SwaggerOperation(Summary = "Профиль преподавателя", Description = "Получение профиля текущего преподавателя")]
         public async Task<IActionResult> GetProfile()
         {
             var username = User.Identity?.Name;
@@ -38,6 +41,7 @@ namespace CollegeApi.Controllers
 
 
         [HttpPost("assign-course")]
+        [SwaggerOperation(Summary = "Привязка преподавателя к курсу", Description = "Преподаватель будет связан с определенным курсом")]
         public async Task<IActionResult> AssignCourse([FromBody] int courseId)
         {
             var username = User.Identity?.Name;

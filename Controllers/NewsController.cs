@@ -4,12 +4,14 @@ using CollegeApi.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Swashbuckle.AspNetCore.Annotations;
 using System.IO;
 
 namespace CollegeApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [SwaggerTag("Управление новостями колледжа")]
     public class NewsController : ControllerBase
     {
         private readonly CollegeDbContext _context;
@@ -20,6 +22,7 @@ namespace CollegeApi.Controllers
         }
 
         [HttpGet]
+        [SwaggerOperation(Summary = "Получить список новостей", Description = "Возвращает список всех новостей колледжа в порядке убывания по дате")]
         public async Task<IActionResult> GetNews()
         {
             var news = await _context.NewsPosts
@@ -31,6 +34,7 @@ namespace CollegeApi.Controllers
         [HttpPost]
         [Authorize(Roles = "Admin")]
         [Consumes("multipart/form-data")]
+        [SwaggerOperation(Summary = "Создать новость", Description = "Позволяет администратору добавить новость с изображением")]
         public async Task<IActionResult> PostNews([FromForm] NewsPostForm form)
         {
             string? imageUrl = null;
@@ -55,6 +59,7 @@ namespace CollegeApi.Controllers
         [HttpPut("{id}")]
         [Authorize(Roles = "Admin")]
         [Consumes("multipart/form-data")]
+        [SwaggerOperation(Summary = "Редактировать новость", Description = "Позволяет администратору отредактировать новость и заменить изображение")]
         public async Task<IActionResult> EditNews(int id, [FromForm] NewsPostForm form)
         {
             var news = await _context.NewsPosts.FindAsync(id);
@@ -83,6 +88,7 @@ namespace CollegeApi.Controllers
 
         [HttpDelete("{id}")]
         [Authorize(Roles = "Admin")]
+        [SwaggerOperation(Summary = "Удалить новость", Description = "Удаляет новость и её изображение")]
         public async Task<IActionResult> DeleteNews(int id)
         {
             var news = await _context.NewsPosts.FindAsync(id);

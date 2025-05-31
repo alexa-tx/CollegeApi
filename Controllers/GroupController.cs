@@ -4,12 +4,14 @@ using CollegeApi.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace CollegeApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
     [Authorize(Roles = "Admin")]
+    [SwaggerTag("Управление учебными группами")]
     public class GroupController : ControllerBase
     {
         private readonly CollegeDbContext _context;
@@ -18,8 +20,9 @@ namespace CollegeApi.Controllers
         {
             _context = context;
         }
-
+        /// <summary>Получить все группы</summary>
         [HttpGet]
+        [SwaggerOperation(Summary = "Получить все группы", Description = "Возвращает список всех учебных групп с их студентами")]
         public async Task<IActionResult> GetAll()
         {
             var groups = await _context.Groups
@@ -27,10 +30,11 @@ namespace CollegeApi.Controllers
                 .ToListAsync();
             return Ok(groups);
         }
-
+        /// <summary>Создать новую группу</summary>
         [HttpPost]
         [Consumes("application/x-www-form-urlencoded")]
-        public async Task<IActionResult> Create([FromForm] GroupForm form)
+        [SwaggerOperation(Summary = "Создать группу", Description = "Создает новую группу и назначает студентов в нее")]
+        public async Task<IActionResult> Create([FromForm, SwaggerParameter("Форма с данными группы")] GroupForm form)
         {
             var group = new Group
             {
@@ -59,9 +63,10 @@ namespace CollegeApi.Controllers
 
             return Ok(group);
         }
-
+        /// <summary>Удалить группу</summary>
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id)
+        [SwaggerOperation(Summary = "Удалить группу", Description = "Удаляет группу по ID")]
+        public async Task<IActionResult> Delete([SwaggerParameter("ID группы")] int id)
         {
             var group = await _context.Groups.FindAsync(id);
             if (group == null)

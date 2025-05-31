@@ -1,22 +1,28 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace CollegeApi.DTOs
 {
     public class ScheduleForm
     {
-        [Required]
+        [SwaggerSchema("Время начала")]
+        [Required(ErrorMessage = "Время начала обязательно")]
         public DateTime StartTime { get; set; }
 
-        [Required]
+        [SwaggerSchema("Время окончания")]
+        [Required(ErrorMessage = "Время окончания обязательно")]
         public DateTime EndTime { get; set; }
 
-        [Required]
+        [SwaggerSchema("ID группы")]
+        [Required(ErrorMessage = "ID группы обязателен")]
         public int GroupId { get; set; }
 
-        [Required]
+        [SwaggerSchema("ID преподавателя")]
+        [Required(ErrorMessage = "ID преподавателя обязателен")]
         public int TeacherProfileId { get; set; }
 
-        [Required]
+        [SwaggerSchema("ID предмета")]
+        [Required(ErrorMessage = "ID предмета обязателен")]
         public int SubjectId { get; set; }
     }
 }

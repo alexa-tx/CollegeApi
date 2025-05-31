@@ -4,11 +4,13 @@ using CollegeApi.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace CollegeApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [SwaggerTag("Управление расписанием колледжа")]
     public class ScheduleController : ControllerBase
     {
         private readonly CollegeDbContext _context;
@@ -19,6 +21,7 @@ namespace CollegeApi.Controllers
         }
 
         [HttpGet]
+        [SwaggerOperation(Summary = "Получить список расписания", Description = "Возвращает список расписания колледжа")]
         public async Task<IActionResult> GetAll()
         {
             var schedule = await _context.ScheduleItems
@@ -31,6 +34,7 @@ namespace CollegeApi.Controllers
         }
 
         [HttpGet("group/{groupId}")]
+        [SwaggerOperation(Summary = "Получить список расписания по ID группы", Description = "Возвращает список расписания определенной группы")]
         public async Task<IActionResult> GetByGroup(int groupId)
         {
             var schedule = await _context.ScheduleItems
@@ -49,6 +53,7 @@ namespace CollegeApi.Controllers
         [HttpPost]
         [Authorize(Roles = "Admin")]
         [Consumes("application/x-www-form-urlencoded")]
+        [SwaggerOperation(Summary = "Создание расписания", Description = "Расписание может создавать только администратор")]
         public async Task<IActionResult> Create([FromForm] ScheduleForm form)
         {
             var group = await _context.Groups.FindAsync(form.GroupId);
@@ -81,6 +86,7 @@ namespace CollegeApi.Controllers
         [HttpPut("{id}")]
         [Authorize(Roles = "Admin")]
         [Consumes("application/x-www-form-urlencoded")]
+        [SwaggerOperation(Summary = "Обновление расписания", Description = "Обновлять расписание может только администратор")]
         public async Task<IActionResult> Update(int id, [FromForm] ScheduleForm form)
         {
             var existing = await _context.ScheduleItems.FindAsync(id);
@@ -102,6 +108,7 @@ namespace CollegeApi.Controllers
 
         [HttpDelete("{id}")]
         [Authorize(Roles = "Admin")]
+        [SwaggerOperation(Summary = "Удаление расписания", Description = "Только администратор может удалять расписание")]
         public async Task<IActionResult> Delete(int id)
         {
             var scheduleItem = await _context.ScheduleItems.FindAsync(id);

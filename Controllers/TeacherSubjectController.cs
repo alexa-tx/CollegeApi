@@ -4,12 +4,14 @@ using CollegeApi.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace CollegeApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
     [Authorize(Roles = "Admin,Teacher")]
+    [SwaggerTag("Связка преподавателя и учебной дисциплины")]
     public class TeacherSubjectController : ControllerBase
     {
         private readonly CollegeDbContext _context;
@@ -20,6 +22,7 @@ namespace CollegeApi.Controllers
         }
 
         [HttpGet]
+        [SwaggerOperation(Summary = "Получения списка всех связок", Description = "Вывод списка, где есть связки между преподавателем и учебной дисциплиной")]
         public async Task<IActionResult> GetAll()
         {
             var list = await _context.TeacherSubjects
@@ -30,6 +33,7 @@ namespace CollegeApi.Controllers
         }
 
         [HttpGet("teacher/{teacherId}")]
+        [SwaggerOperation(Summary = "Вывод информации", Description = "Вывод информации по ID преподавателя о его связке")]
         public async Task<IActionResult> GetByTeacher(int teacherId)
         {
             var items = await _context.TeacherSubjects
@@ -40,6 +44,8 @@ namespace CollegeApi.Controllers
         }
 
         [HttpGet("subject/{subjectId}")]
+        [SwaggerOperation(Summary = "Вывод информации", Description = "Вывод информации по ID учебной дисциплины о его связке")]
+
         public async Task<IActionResult> GetBySubject(int subjectId)
         {
             var items = await _context.TeacherSubjects
@@ -52,6 +58,7 @@ namespace CollegeApi.Controllers
         
         [HttpPost]
         [Consumes("application/x-www-form-urlencoded")]
+        [SwaggerOperation(Summary = "Создание связи", Description = "Создание связи между преподавателем и учебной дисциплиной")]
         public async Task<IActionResult> Assign([FromForm] TeacherSubjectForm form)
         {
             if (!await _context.TeacherProfiles.AnyAsync(t => t.Id == form.TeacherProfileId))
@@ -80,6 +87,7 @@ namespace CollegeApi.Controllers
 
         [HttpDelete]
         [Consumes("application/x-www-form-urlencoded")]
+        [SwaggerOperation(Summary = "Удаление связи", Description = "Преподаватель больше не будет связан с данной учебной дисциплиной")]
         public async Task<IActionResult> Unassign([FromForm] TeacherSubjectForm form)
         {
             var tsEntity = await _context.TeacherSubjects

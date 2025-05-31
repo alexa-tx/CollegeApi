@@ -5,11 +5,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using CollegeApi.DTOs;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace CollegeApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [SwaggerTag("Отправка и проверка домашних заданий")]
     public class HomeworkSubmissionController : ControllerBase
     {
         private readonly CollegeDbContext _context;
@@ -18,10 +20,11 @@ namespace CollegeApi.Controllers
         {
             _context = context;
         }
-
+        /// <summary>Отправить домашнюю работу</summary>
         [HttpPost]
         [Authorize(Roles = "Student")]
-        public async Task<IActionResult> SubmitHomework([FromBody] HomeworkSubmission submission)
+        [SwaggerOperation(Summary = "Отправка домашней работы", Description = "Позволяет студенту отправить выполненное задание")]
+        public async Task<IActionResult> SubmitHomework([FromBody, SwaggerParameter("Отправленные данные")] HomeworkSubmission submission)
         {
             var homework = await _context.Homeworks.FindAsync(submission.HomeworkId);
             var student = await _context.StudentProfiles.FindAsync(submission.StudentProfileId);
@@ -42,9 +45,10 @@ namespace CollegeApi.Controllers
                 submissionId = submission.Id
             });
         }
-
+        /// <summary>Получить отправленные задания (для преподавателей)</summary>
         [HttpGet]
         [Authorize(Roles = "Teacher")]
+        [SwaggerOperation(Summary = "Список отправленных домашних заданий", Description = "Возвращает список всех присланных заданий по предметам преподавателя")]
         public async Task<IActionResult> GetSubmissions()
         {
             var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);

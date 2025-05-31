@@ -3,11 +3,13 @@ using CollegeApi.DTOs;
 using CollegeApi.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace CollegeApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [SwaggerTag("Управление оценками")]
     public class GradeController : ControllerBase
     {
         private readonly CollegeDbContext _context;
@@ -16,10 +18,12 @@ namespace CollegeApi.Controllers
         {
             _context = context;
         }
-
+        /// <summary>Создать новую оценку</summary>
+        /// <param name="form">Данные оценки</param>
         [HttpPost]
         [Consumes("application/x-www-form-urlencoded")]
-        public async Task<IActionResult> CreateGrade([FromForm] GradeForm form)
+        [SwaggerOperation(Summary = "Создать оценку", Description = "Создает новую оценку студенту по предмету")]
+        public async Task<IActionResult> CreateGrade([FromForm, SwaggerParameter("Форма с данными оценки")] GradeForm form)
         {
             if (!await _context.StudentProfiles.AnyAsync(s => s.Id == form.StudentProfileId))
                 return NotFound("Студент не найден.");
@@ -42,9 +46,10 @@ namespace CollegeApi.Controllers
 
             return Ok(grade);
         }
-
+        /// <summary>Получить оценки студента</summary>
         [HttpGet("student/{studentId}")]
-        public async Task<IActionResult> GetGradesByStudent(int studentId)
+        [SwaggerOperation(Summary = "Оценки по студенту", Description = "Получает все оценки конкретного студента")]
+        public async Task<IActionResult> GetGradesByStudent([SwaggerParameter("ID студента")] int studentId)
         {
             var grades = await _context.Grades
                 .Where(g => g.StudentProfileId == studentId)
@@ -62,9 +67,10 @@ namespace CollegeApi.Controllers
                 AverageGrade = average
             });
         }
-
+        /// <summary>Получить оценки по предмету</summary>
         [HttpGet("subject/{subjectId}")]
-        public async Task<IActionResult> GetGradesBySubject(int subjectId)
+        [SwaggerOperation(Summary = "Оценки по предмету", Description = "Получает все оценки по заданному предмету")]
+        public async Task<IActionResult> GetGradesBySubject([SwaggerParameter("ID предмета")] int subjectId)
         {
             var grades = await _context.Grades
                 .Where(g => g.SubjectId == subjectId)

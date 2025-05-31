@@ -3,11 +3,13 @@ using CollegeApi.DTOs;
 using CollegeApi.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace CollegeApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [SwaggerTag("Управление домашними заданиями")]
     public class HomeworkController : ControllerBase
     {
         private readonly CollegeDbContext _context;
@@ -16,10 +18,11 @@ namespace CollegeApi.Controllers
         {
             _context = context;
         }
-
+        /// <summary>Создать новое домашнее задание</summary>
         [HttpPost]
         [Consumes("application/x-www-form-urlencoded")]
-        public async Task<IActionResult> CreateHomework([FromForm] HomeworkForm form)
+        [SwaggerOperation(Summary = "Создание домашнего задания", Description = "Создает новое домашнее задание по предмету")]
+        public async Task<IActionResult> CreateHomework([FromForm, SwaggerParameter("Форма с данными домашнего задания")] HomeworkForm form)
         {
             var subject = await _context.Subjects.FindAsync(form.SubjectId);
             if (subject == null)
@@ -44,9 +47,10 @@ namespace CollegeApi.Controllers
                 homework
             });
         }
-
+        /// <summary>Удалить домашнее задание по ID</summary>
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteHomework(int id)
+        [SwaggerOperation(Summary = "Удаление по ID", Description = "Удаляет конкретное домашнее задание")]
+        public async Task<IActionResult> DeleteHomework([SwaggerParameter("ID домашнего задания")] int id)
         {
             var homework = await _context.Homeworks.FindAsync(id);
             if (homework == null)
@@ -57,8 +61,9 @@ namespace CollegeApi.Controllers
 
             return Ok("Домашнее задание удалено.");
         }
-
+        /// <summary>Удалить все просроченные домашние задания</summary>
         [HttpDelete("expired")]
+        [SwaggerOperation(Summary = "Удаление просроченных", Description = "Удаляет все домашние задания с истекшим сроком сдачи")]
         public async Task<IActionResult> DeleteExpiredHomeworks()
         {
             var now = DateTime.UtcNow;

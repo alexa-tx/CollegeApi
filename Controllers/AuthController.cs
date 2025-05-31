@@ -5,12 +5,14 @@ using CollegeApi.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Swashbuckle.AspNetCore.Annotations;
 using System.Security.Claims;
 
 namespace CollegeApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [SwaggerTag("Управление авторизацией и пользователями")]
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService;
@@ -24,6 +26,12 @@ namespace CollegeApi.Controllers
 
         [HttpPost("login")]
         [Consumes("application/x-www-form-urlencoded")]
+        [SwaggerOperation(
+             Summary = "Вход в систему",
+             Description = "Позволяет пользователю войти в систему, получив JWT-токен"
+         )]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public IActionResult Login([FromForm] LoginForm form)
         {
             if (_authService.ValidateUser(form.Username, form.Password))
@@ -37,6 +45,10 @@ namespace CollegeApi.Controllers
 
         [HttpPost("register")]
         [Consumes("application/x-www-form-urlencoded")]
+        [SwaggerOperation(
+            Summary = "Регистрация нового пользователя",
+            Description = "Создаёт пользователя и профиль (студента или преподавателя)"
+        )]
         public async Task<IActionResult> Register([FromForm] RegisterForm form)
         {
             if (await _context.Users.AnyAsync(u => u.Username == form.Username))
@@ -89,18 +101,22 @@ namespace CollegeApi.Controllers
 
         [HttpPost("adminOnly")]
         [Authorize(Roles = "Admin")]
+        [SwaggerOperation(Summary = "Только для администратора")]
         public IActionResult AdminOnlyAction() => Ok("Только для администратора");
 
         [HttpPost("teacherOnly")]
         [Authorize(Roles = "Teacher")]
+        [SwaggerOperation(Summary = "Только для преподавателя")]
         public IActionResult TeacherOnlyAction() => Ok("Только для преподавателя");
 
         [HttpPost("studentOnly")]
         [Authorize(Roles = "Student")]
+        [SwaggerOperation(Summary = "Только для студента")]
         public IActionResult StudentOnlyAction() => Ok("Только для студента");
 
         [HttpGet("me")]
         [Authorize]
+        [SwaggerOperation(Summary = "Информация о текущем пользователе")]
         public IActionResult Me()
         {
             var username = User.Identity?.Name;
@@ -110,6 +126,7 @@ namespace CollegeApi.Controllers
 
         [HttpPut("update/{userId}")]
         [Authorize(Roles = "Admin")]
+        [SwaggerOperation(Summary = "Обновить пользователя", Description = "Доступно только администратору")]
         public async Task<IActionResult> UpdateUser(int userId, [FromForm] UpdateUserForm form)
         {
             var user = await _context.Users.FindAsync(userId);
@@ -146,6 +163,7 @@ namespace CollegeApi.Controllers
 
         [HttpDelete("{userId}")]
         [Authorize(Roles = "Admin")]
+        [SwaggerOperation(Summary = "Удалить пользователя", Description = "Удаляет пользователя и его профиль")]
         public async Task<IActionResult> DeleteUser(int userId)
         {
             var user = await _context.Users.FindAsync(userId);
@@ -170,6 +188,7 @@ namespace CollegeApi.Controllers
         }
         [HttpGet("users")]
         [Authorize(Roles = "Admin")]
+        [SwaggerOperation(Summary = "Список всех пользователей")]
         public async Task<IActionResult> GetAllUsers()
         {
             var users = await _context.Users.ToListAsync();
@@ -214,6 +233,7 @@ namespace CollegeApi.Controllers
         }
         [HttpPut("profile")]
         [Authorize]
+        [SwaggerOperation(Summary = "Обновить собственный профиль")]
         public async Task<IActionResult> UpdateOwnProfile([FromForm] UpdateProfileDto dto)
         {
             var username = User.Identity?.Name;
@@ -265,6 +285,7 @@ namespace CollegeApi.Controllers
         }
         [HttpGet("profile")]
         [Authorize]
+        [SwaggerOperation(Summary = "Получить собственный профиль")]
         public async Task<IActionResult> GetOwnProfile()
         {
             var username = User.Identity?.Name;
@@ -308,7 +329,8 @@ namespace CollegeApi.Controllers
         }
         [HttpPost("add-user")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> AddUser([FromBody] AdminAddUserDto dto)
+        [SwaggerOperation(Summary = "Добавить пользователя (админ)", Description = "Добавление нового студента или преподавателя вручную")]
+        public async Task<IActionResult> AddUser([FromForm] AdminAddUserDto dto)
         {
             if (await _context.Users.AnyAsync(u => u.Username == dto.Username))
                 return BadRequest("Пользователь с таким логином уже существует");
