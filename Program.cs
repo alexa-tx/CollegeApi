@@ -91,11 +91,8 @@ var app = builder.Build();
 Console.WriteLine($"Listening on port {port}");
 
 // Swagger Ч только в разработке
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseStaticFiles();
 
