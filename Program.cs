@@ -10,16 +10,27 @@ using CollegeApi;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Получаем порт из переменной окружения (Render его задаёт автоматически)
+var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+builder.WebHost.UseUrls($"http://*:{port}");
+
+// Настройка подключения к БД
 builder.Services.AddDbContext<CollegeDbContext>(options =>
     options.UseMySql(
-    builder.Configuration.GetConnectionString("DefaultConnection"),
-    new MySqlServerVersion(new Version(8, 0, 36)),
-    mySqlOptions => mySqlOptions.EnableRetryOnFailure()
-)
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        new MySqlServerVersion(new Version(8, 0, 36)),
+        mySqlOptions => mySqlOptions.EnableRetryOnFailure()
+    )
 );
 
-builder.Services.AddControllers();
+// Контроллеры
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve;
+    });
 
+// JWT-аутентификация
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -37,17 +48,19 @@ builder.Services.AddAuthentication(options =>
         ValidIssuer = jwtSettings["Issuer"],
         ValidAudience = jwtSettings["Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(jwtSettings["Key"] ?? throw new Exception("JWT Key not configured")))
+            Encoding.UTF8.GetBytes(jwtSettings["Key"] ?? throw new Exception("JWT Key not configured"))
+        )
     };
 });
 
-builder.Services.AddAuthorization();
+// Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.EnableAnnotations();
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "College API", Version = "v1" });
     c.SchemaFilter<DisplayNameSchemaFilter>();
+
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         In = ParameterLocation.Header,
@@ -56,6 +69,7 @@ builder.Services.AddSwaggerGen(c =>
         Type = SecuritySchemeType.ApiKey,
         Scheme = "Bearer"
     });
+
     c.AddSecurityRequirement(new OpenApiSecurityRequirement {
         {
             new OpenApiSecurityScheme {
@@ -64,31 +78,30 @@ builder.Services.AddSwaggerGen(c =>
                     Id = "Bearer"
                 }
             },
-            new string[] {}
+            Array.Empty<string>()
         }
     });
 });
 
-builder.Services.AddControllers()
-    .AddJsonOptions(options =>
-    {
-        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve;
-    });
-
-
-
+// DI для сервиса авторизации
 builder.Services.AddScoped<IAuthService, AuthService>();
 
 var app = builder.Build();
 
+// Swagger — только в разработке
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
 app.UseStaticFiles();
 
-app.UseHttpsRedirection();
+// Не включаем HTTPS-редирект на Render
+if (app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseAuthentication();
 app.UseAuthorization();
