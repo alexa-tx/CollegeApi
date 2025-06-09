@@ -88,6 +88,8 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 
 var app = builder.Build();
 
+Console.WriteLine($"Listening on port {port}");
+
 // Swagger Ч только в разработке
 if (app.Environment.IsDevelopment())
 {
